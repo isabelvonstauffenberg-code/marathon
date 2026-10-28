@@ -15,13 +15,14 @@ export default function StandPage() {
   return (
     <main>
       <PageHeader
+        egg={{ src: "/pics/subway.jpg" }}
         eyebrow="plan your day"
         title={
           <>
             where should <Hi tone="sky">i</Hi> stand?
           </>
         }
-        subtitle={`get there early. tracking isn't perfect and ${duo} can't wait.`}
+        subtitle={`get there early. tracking is approximate and ${duo} won't stop.`}
       />
       <SpotTimeline runners={mains} now={now} sightings={sightings} claims={claims} />
       <div className="mx-5 mt-8 rounded-[28px] border-[2.5px] border-ink bg-ink p-5 text-paper">
@@ -47,7 +48,7 @@ export default function StandPage() {
           </li>
           <li className="flex gap-2.5">
             <span className="mt-1 shrink-0 text-sun">★</span>
-            <span>clocks fall back at 2 a.m. race morning. your nine o&apos;clock is the new nine o&apos;clock.</span>
+            <span>clocks fall back at 2 a.m. on race morning. all times here are after the change.</span>
           </li>
         </ul>
       </div>

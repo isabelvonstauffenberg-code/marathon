@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { CourseMap, type MapRunner } from "@/components/CourseMap";
 import { estimate, fmtClock, fmtPace, projectedFinish, type Estimate, type RunnerProfile } from "@/lib/model";
 import { sightingsFor, toAnchors } from "@/lib/me";
+import { useLiveSplits, withLiveStart } from "@/lib/nyrr";
 import type { Sighting } from "@/lib/store";
 import { spots, spotById } from "@/data/spots";
 import { MARATHON_MILES } from "@/lib/geo";
@@ -20,14 +21,15 @@ const BOROUGHS = [
 ];
 
 function statusLine(r: RunnerProfile, est: Estimate, sightings: Sighting[], now: Date) {
-  if (est.status === "pre") return `hasn't started yet. starts ${fmtClock(est.startsAt)}, probably in a porta-potty line till then.`;
-  if (est.status === "finished") return `finished. probably. go find ${r.name} near the finish and scream.`;
+  if (est.status === "pre") return `not started. starts around ${fmtClock(est.startsAt)}`;
+  if (est.status === "finished") return `probably finished.`;
   if (est.anchor) {
     const s = sightings.find((x) => x.seen_at === est.anchor!.seenAt);
-    const where = s ? spotById(s.spot_id)?.name ?? `mile ${s.mile}` : `mile ${est.anchor.mile}`;
-    return `spotted at ${where} ${timeAgo(est.anchor.seenAt, now)}${s ? ` by ${s.name}` : ""}. Now around mile ${est.mile.toFixed(1)}.`;
+    if (!s) return `crossed the official mat at mile ${est.anchor.mile.toFixed(1)} ${timeAgo(est.anchor.seenAt, now)}. Now around mile ${est.mile.toFixed(1)}.`;
+    const where = spotById(s.spot_id)?.name ?? `mile ${s.mile}`;
+    return `spotted at ${where} ${timeAgo(est.anchor.seenAt, now)} by ${s.name}. Now around mile ${est.mile.toFixed(1)}.`;
   }
-  return `somewhere in the glowy stretch on the map, if the pace holds.`;
+  return `estimated from projected splits. the shaded stretch on the map is the likely range.`;
 }
 
 const mileOf = (est: Estimate | null) => (est && est.status !== "pre" ? est.mile : 0);
@@ -68,28 +70,37 @@ export function RunnerLive({
   now,
   spotBadges,
   onSpotClick,
+  extraMapRunners = [],
 }: {
   runners: RunnerProfile[];
   sightings: Sighting[];
   now: Date | null;
   spotBadges?: Record<string, number>;
   onSpotClick?: (id: string) => void;
+  // Map-only markers (e.g. friends), drawn beneath the main runners; no cards.
+  extraMapRunners?: MapRunner[];
 }) {
+  const live = useLiveSplits(runners, now);
   const rows = useMemo(
     () =>
-      runners.map((r) => {
+      runners.map((runner) => {
+        const r = withLiveStart(runner, live[runner.slug]);
         const mine = sightingsFor(sightings, r.slug);
-        return { r, mine, est: now ? estimate(now, r, toAnchors(mine)) : null };
+        const anchors = [...toAnchors(mine), ...(live[r.slug]?.anchors ?? [])];
+        return { r, mine, est: now ? estimate(now, r, anchors) : null };
       }),
-    [runners, sightings, now],
+    [runners, sightings, now, live],
   );
-  const mapRunners: MapRunner[] = rows
-    .filter(({ est }) => est)
-    .map(({ r, est }) =>
-      est!.status === "pre"
-        ? { id: r.slug, name: r.name, color: r.color, mile: 0 }
-        : { id: r.slug, name: r.name, color: r.color, mile: est!.mile, lo: est!.lo, hi: est!.hi },
-    );
+  const mapRunners: MapRunner[] = [
+    ...rows
+      .filter(({ est }) => est)
+      .map(({ r, est }) =>
+        est!.status === "pre"
+          ? { id: r.slug, name: r.name, color: r.color, mile: 0 }
+          : { id: r.slug, name: r.name, color: r.color, mile: est!.mile, lo: est!.lo, hi: est!.hi },
+      ),
+    ...extraMapRunners.map((r) => ({ ...r, under: true })),
+  ];
   const solo = runners.length === 1;
   const statusWord = (est: Estimate | null) => (est?.status === "running" ? "on the move" : est?.status === "finished" ? "finished!" : "pre-gun");
 

@@ -5,6 +5,7 @@ import { trainColor } from "@/data/spots";
 import { isShared } from "@/lib/store";
 import { duo } from "@/config/runner";
 import { Star } from "@/components/Stickers";
+import { Egg, type Pic } from "@/components/Snaps";
 
 export function Wordmark() {
   return (
@@ -15,7 +16,7 @@ export function Wordmark() {
   );
 }
 
-export function PageHeader({ eyebrow, title, subtitle, back, no }: { eyebrow?: string; title: React.ReactNode; subtitle?: React.ReactNode; back?: string; no?: string }) {
+export function PageHeader({ eyebrow, title, subtitle, back, no, egg }: { eyebrow?: string; title: React.ReactNode; subtitle?: React.ReactNode; back?: string; no?: string; egg?: Pic }) {
   return (
     <header className="rise px-5 pt-5 pb-7">
       <div className="flex items-center justify-between gap-3">
@@ -26,12 +27,15 @@ export function PageHeader({ eyebrow, title, subtitle, back, no }: { eyebrow?: s
         ) : (
           <Wordmark />
         )}
+        <span className="flex items-center gap-2.5">
+        {egg && <Egg pic={egg} />}
         {eyebrow && (
           <span className="stamp display inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-pink px-3 py-1 text-[12.5px] lowercase" style={{ ["--r" as string]: "4deg" }}>
             {no && <span className="mono text-[10px] font-semibold">{no}</span>}
             {eyebrow}
           </span>
         )}
+        </span>
       </div>
       <h1 className="display mt-7 text-[52px] leading-[0.94] lowercase">{title}</h1>
       {subtitle && <p className="mt-5 max-w-[34ch] text-[13.5px] leading-[1.6] text-ink/80 lowercase">{subtitle}</p>}

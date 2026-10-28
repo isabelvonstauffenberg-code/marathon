@@ -56,7 +56,7 @@ create policy "public read" on sightings for select using (true);
 create policy "public add" on sightings for insert with check (seen_at <= now() + interval '5 minutes');
 create policy "public read" on guesses for select using (true);
 -- Guesses lock at the gun. Update this timestamp if the start time changes.
-create policy "public add before gun" on guesses for insert with check (now() < '2026-11-01T09:10:00-05:00');
+create policy "public add before gun" on guesses for insert with check (now() < '2026-11-01T11:30:00-05:00');
 create policy "public read" on friends for select using (true);
 create policy "public add" on friends for insert with check (true);
 

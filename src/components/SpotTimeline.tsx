@@ -33,7 +33,7 @@ export function SpotTimeline({
     .filter(({ wins }) => !limit || !now || wins.some(({ win }) => win.latest > now))
     .slice(0, limit);
 
-  if (rows.length === 0) return <p className="display mx-5 text-[20px] lowercase">no more spots ahead. head for the finish!</p>;
+  if (rows.length === 0) return <p className="display mx-5 text-[20px] lowercase">no more spots ahead. head to the finish.</p>;
 
   return (
     <ol className="rise mx-5 space-y-3">

@@ -9,7 +9,18 @@ import { Star } from "@/components/Stickers";
 
 const AGO = [0, 2, 5, 10, 15];
 
-export function SpotForm({ runners, withPhoto = true, defaultSpot }: { runners: { slug: string; name: string }[]; withPhoto?: boolean; defaultSpot?: string }) {
+export function SpotForm({
+  runners,
+  withPhoto = true,
+  defaultSpot,
+  photoFirst = false,
+}: {
+  runners: { slug: string; name: string }[];
+  withPhoto?: boolean;
+  defaultSpot?: string;
+  // Arrived via "upload pictures": spotlight the photo picker and open it if the browser allows.
+  photoFirst?: boolean;
+}) {
   const [who, setWho] = useState<string[]>(runners.map((r) => r.slug).slice(0, 1));
   const chosen = runners.filter((r) => who.includes(r.slug));
   const runnerName = chosen.length ? chosen.map((r) => r.name).join(" & ") : runners.map((r) => r.name).join(" or ");
@@ -23,11 +34,18 @@ export function SpotForm({ runners, withPhoto = true, defaultSpot }: { runners: 
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const photoButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setName(rememberedName()), []);
   useEffect(() => {
     if (defaultSpot) setSpotId(defaultSpot);
   }, [defaultSpot]);
+  useEffect(() => {
+    if (!photoFirst || !withPhoto) return;
+    photoButton.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    // File pickers need a fresh tap; when we still have one from the home button, open it straight away.
+    if (navigator.userActivation?.isActive) fileInput.current?.click();
+  }, [photoFirst, withPhoto]);
   useEffect(() => {
     if (!file) return setPreview(null);
     const u = URL.createObjectURL(file);
@@ -60,11 +78,17 @@ export function SpotForm({ runners, withPhoto = true, defaultSpot }: { runners: 
 
   return (
     <form onSubmit={submit} className="relative space-y-6">
+      {withPhoto && photoFirst && !preview && (
+        <p className="stamp display absolute -top-4 left-4 z-10 rounded-full border-2 border-ink bg-lime px-3 py-1 text-[13px] lowercase" style={{ ["--r" as string]: "-5deg" }}>
+          start here ↓
+        </p>
+      )}
       {withPhoto && (
         <button
+          ref={photoButton}
           type="button"
           onClick={() => fileInput.current?.click()}
-          className="press group relative flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden rounded-[30px] border-[2.5px] border-dashed border-ink bg-bubble"
+          className={`press group relative flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden rounded-[30px] border-[2.5px] border-ink ${photoFirst ? "sticker bg-pink" : "border-dashed bg-bubble"}`}
         >
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -76,12 +100,12 @@ export function SpotForm({ runners, withPhoto = true, defaultSpot }: { runners: 
                 <Camera size={26} strokeWidth={2.4} className="absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </span>
               <span className="display mt-2 px-6 text-center text-[26px] leading-none lowercase">snap {runnerName}</span>
-              <span className="tag mt-2 !text-[10.5px]">optional, but it makes the feed</span>
+              <span className="tag mt-2 !text-[10.5px]">{photoFirst ? "tap to pick a photo or take one" : "optional, but it makes the feed"}</span>
             </>
           )}
         </button>
       )}
-      <input ref={fileInput} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <input ref={fileInput} type="file" accept="image/*" capture={photoFirst ? undefined : "environment"} className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
 
       {runners.length > 1 && (
         <div>
@@ -118,11 +142,11 @@ export function SpotForm({ runners, withPhoto = true, defaultSpot }: { runners: 
             </Chip>
           ))}
         </div>
-        <p className="mt-2 text-[11.5px] leading-snug text-ink/70 lowercase">be honest. a late post is fine; a wrong time sends everyone to the wrong mile.</p>
+        <p className="mt-2 text-[11.5px] leading-snug text-ink/70 lowercase">a late post is fine. a wrong time puts the star at the wrong mile.</p>
       </div>
 
       <Field label="Your name">
-        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} maxLength={40} required placeholder="so we know who to thank" />
+        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} maxLength={40} required placeholder="your name" />
       </Field>
       <Honeypot value={trap} onChange={setTrap} />
 

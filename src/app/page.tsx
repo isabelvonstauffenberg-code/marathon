@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { Camera, Plus } from "lucide-react";
 import { duo, race, site, sisters } from "@/config/runner";
-import { CREW_KEY, mains, toProfile } from "@/lib/me";
+import { CREW_KEY, friendProfile, mains, sightingsFor, toAnchors, toProfile } from "@/lib/me";
 import { useCollection, useNow } from "@/lib/store";
-import { fmtClock, fmtPace, projectedFinish, startTime } from "@/lib/model";
+import { useLiveSplits, withLiveStart } from "@/lib/nyrr";
+import { estimate, fmtClock, fmtPace, projectedFinish, startTime, type Estimate, type RunnerProfile } from "@/lib/model";
 import { RunnerLive } from "@/components/RunnerLive";
+import type { MapRunner } from "@/components/CourseMap";
 import { SpotTimeline } from "@/components/SpotTimeline";
+import { Throwback } from "@/components/Snaps";
 import { Pill, SectionHead } from "@/components/ui";
 import { Hi, Sparkle, SpinBadge, Star } from "@/components/Stickers";
 
@@ -81,12 +86,80 @@ function Bib({ tilt }: { tilt: number }) {
   );
 }
 
+function BigButtons() {
+  const buttons = [
+    { href: "/spotted?photo=1", title: "upload pictures", tag: "photos", cta: "upload", bg: "bg-pink", star: "#fff200", icon: <Camera size={24} strokeWidth={2.5} />, tilt: -1.5 },
+    { href: "/friends?add=1", title: "find your other friends", tag: "friends", cta: "add by bib", bg: "bg-sky", star: "#3ee04f", icon: <Plus size={26} strokeWidth={3} />, tilt: 1.5 },
+  ];
+  return (
+    <div className="rise mx-5 grid grid-cols-2 gap-3.5">
+      {buttons.map((b, i) => (
+        <div key={b.href}>
+          <div className="h-full" style={{ transform: `rotate(${b.tilt}deg)` }}>
+          <Link href={b.href} className={`press group relative flex h-full min-h-[196px] flex-col rounded-[28px] border-[2.5px] border-ink p-4 pt-5 ${b.bg}`}>
+            <span className="absolute -top-5 -right-3 transition-transform duration-500 group-hover:rotate-[72deg] group-hover:scale-110">
+              <Star size={66} fill={b.star} strokeWidth={6} className="float" style={{ ["--r" as string]: `${i ? 10 : -12}deg`, animationDelay: `${i * -1.6}s` }} />
+              <span className="absolute top-[53%] left-1/2 -translate-x-1/2 -translate-y-1/2">{b.icon}</span>
+            </span>
+            <span className="tag !text-[10px]">{b.tag}</span>
+            <span className="display mt-2 block pr-2 text-[30px] leading-[0.9] tracking-[-0.03em] lowercase">{b.title}</span>
+            <span className="mt-auto flex items-center justify-between gap-2 pt-4">
+              <span className="display rounded-full border-2 border-ink bg-ink px-3 py-1 text-[13px] text-sun lowercase">{b.cta}</span>
+              <span aria-hidden className="display flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink bg-lime text-[18px] transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </span>
+          </Link>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const mileLabel = (est: Estimate | null) =>
+  !est ? "" : est.status === "pre" ? `starts ${fmtClock(est.startsAt)}` : est.status === "finished" ? "finished!" : `mile ${est.mile.toFixed(1)}`;
+
+function YourFriends({ rows }: { rows: { profile: RunnerProfile; est: Estimate | null }[] }) {
+  return (
+    <div className="mx-5 mt-4 rounded-[24px] border-[2.5px] border-ink bg-paper p-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="display flex items-center gap-2 text-[20px] leading-none lowercase">
+          <Sparkle size={16} /> your friends
+        </p>
+        <Link href="/friends?add=1" className="press display shrink-0 rounded-full border-2 border-ink bg-lime px-3 py-1 text-[12.5px] lowercase">
+          + {rows.length ? "add another" : "add a friend"}
+        </Link>
+      </div>
+      {rows.length ? (
+        <ul className="mt-3 border-t-2 border-dashed border-ink/30">
+          {rows.map(({ profile, est }) => (
+            <li key={profile.slug} className="border-b-2 border-dashed border-ink/30 last:border-b-0">
+              <Link href={`/friends/${profile.slug}`} className="group flex items-center gap-2.5 py-2.5">
+                <Star size={26} fill={profile.color} strokeWidth={8} className="shrink-0 transition-transform duration-500 group-hover:rotate-[72deg]" />
+                <span className="display min-w-0 flex-1 truncate text-[19px] leading-none lowercase">{profile.name}</span>
+                <span className="display shrink-0 rounded-full border-2 border-ink px-2.5 py-0.5 text-[12px] lowercase tabular" style={{ background: profile.color }}>
+                  {mileLabel(est)}
+                </span>
+                <span aria-hidden className="display text-[18px] transition-transform group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-[12px] leading-[1.55] lowercase">running with friends? add their bib and their star shows up on this map.</p>
+      )}
+    </div>
+  );
+}
+
 const contents = [
   { href: "/stand", title: "where to stand", body: "spots, trains, arrival windows", tone: "#ffffff" },
-  { href: "/crew", title: "claim a mile", body: "so no mile goes unloved", tone: "#ffa6ec" },
-  { href: "/spotted", title: "spotted!", body: "post a sighting, move the dot", tone: "#c8efff" },
-  { href: "/pool", title: "the pool", body: "call the finish time", tone: "#ffffff" },
-  { href: "/sign", title: "make a sign", body: "shuffle, print, hold high", tone: "#ffa6ec" },
+  { href: "/crew", title: "claim a mile", body: "pick a spot on the course", tone: "#ffa6ec" },
+  { href: "/spotted", title: "spotted", body: "post a sighting, update the map", tone: "#c8efff" },
+    { href: "/sign", title: "make a sign", body: "pick a line, add names, print", tone: "#ffa6ec" },
   { href: "/friends", title: "friends", body: "follow everyone else running", tone: "#c8efff" },
 ];
 
@@ -95,6 +168,21 @@ export default function Home() {
   const router = useRouter();
   const { rows: sightings } = useCollection("sightings");
   const { rows: claims } = useCollection("claims", CREW_KEY);
+  const { rows: friends } = useCollection("friends");
+  const friendProfiles = useMemo(() => friends.map(friendProfile), [friends]);
+  const friendLive = useLiveSplits(friendProfiles, now);
+  const friendRows = useMemo(
+    () =>
+      friendProfiles.map((fp) => {
+        const profile = withLiveStart(fp, friendLive[fp.slug]);
+        const anchors = [...toAnchors(sightingsFor(sightings, profile.slug)), ...(friendLive[fp.slug]?.anchors ?? [])];
+        return { profile, est: now ? estimate(now, profile, anchors) : null };
+      }),
+    [friendProfiles, friendLive, sightings, now],
+  );
+  const friendMarkers: MapRunner[] = friendRows
+    .filter(({ est }) => est)
+    .map(({ profile: p, est }) => ({ id: p.slug, name: p.name, color: p.color, mile: est!.status === "pre" ? 0 : est!.mile }));
   const badges = claims.reduce<Record<string, number>>((acc, c) => ({ ...acc, [c.spot_id]: (acc[c.spot_id] ?? 0) + 1 }), {});
   const gun = firstGun;
   const started = now && now >= gun;
@@ -124,9 +212,9 @@ export default function Home() {
         </div>
         <div className="mt-6 flex items-end justify-between gap-4">
           <p className="max-w-[28ch] text-[13.5px] leading-[1.6] lowercase">
-            a spectator&apos;s guide to spotting two sisters among tens of thousands of runners, across five boroughs, before they find the finish. snacks recommended.
+            where to stand, when to get there, and roughly where {duo} are on the course.
           </p>
-          <SpinBadge text="★ two sisters ★ one mission ★ 26.2 " size={92} className="-mb-1" />
+          <SpinBadge text="★ two sisters ★ five boroughs ★ 26.2 " size={92} className="-mb-1" />
         </div>
       </header>
 
@@ -137,9 +225,11 @@ export default function Home() {
       <div className="mt-9">
         {started ? (
           <div className="stamp mx-5 rounded-[24px] border-[2.5px] border-ink bg-ink px-5 py-4 text-sun" style={{ ["--r" as string]: "-1deg" }}>
-            <p className="display text-[13px] text-pink lowercase">they&apos;re off!</p>
+            <p className="display text-[13px] text-pink lowercase">they&apos;re off</p>
             <p className="display mt-1 text-[22px] leading-[1.08] lowercase">
-              {sisters.map((s) => `${s.name} crossed the mat at ${fmtClock(startTime(toProfile(s)))}`).join(", ").replace(/\.$/, "")}. GO SUPPORT!!
+              {new Set(sisters.map((s) => +startTime(toProfile(s)))).size === 1
+                ? `${duo} crossed the start at ${fmtClock(startTime(toProfile(sisters[0])))}.`
+                : `${sisters.map((s) => `${s.name} crossed the start at ${fmtClock(startTime(toProfile(s)))}`).join(", ")}.`}
             </p>
           </div>
         ) : (
@@ -147,9 +237,14 @@ export default function Home() {
         )}
       </div>
 
+      <div className="mt-8">
+        <BigButtons />
+      </div>
+
       <div className="mt-12">
         <SectionHead no="i." title="whereabouts" aside={<Pill tone="muted">live-ish</Pill>} />
-        <RunnerLive runners={mains} sightings={sightings} now={now} spotBadges={badges} onSpotClick={(id) => router.push(`/crew?spot=${id}`)} />
+        <RunnerLive runners={mains} sightings={sightings} now={now} spotBadges={badges} onSpotClick={(id) => router.push(`/crew?spot=${id}`)} extraMapRunners={friendMarkers} />
+        <YourFriends rows={friendRows} />
       </div>
 
       <div className="mt-12">
@@ -166,7 +261,12 @@ export default function Home() {
       </div>
 
       <div className="mt-12">
-        <SectionHead no="iii." title="the goods" />
+        <SectionHead no="iii." title="the archive" aside={<Pill tone="muted">swipe →</Pill>} />
+        <Throwback />
+      </div>
+
+      <div className="mt-12">
+        <SectionHead no="iv." title="the goods" />
         <ol className="rise mx-5 overflow-hidden rounded-[28px] border-[2.5px] border-ink bg-lime">
           {contents.map((c, i) => (
             <li key={c.href} className={i ? "border-t-[2.5px] border-ink" : ""}>
@@ -189,10 +289,10 @@ export default function Home() {
 
       {site.donateUrl && (
         <a href={site.donateUrl} target="_blank" rel="noreferrer" className="press group relative mx-5 mt-12 block overflow-hidden rounded-[28px] border-[2.5px] border-ink bg-pink p-6">
-          <p className="tag">the actual point</p>
-          <p className="display mt-2 text-[36px] leading-[0.95] lowercase">do the decent thing.</p>
+          <p className="tag">fundraising</p>
+          <p className="display mt-2 text-[36px] leading-[0.95] lowercase">{site.donateCause || "donate"}.</p>
           <p className="mt-3 text-[13px] leading-relaxed lowercase">
-            {duo} run 26.2 miles for {site.donateCause || "a good cause"}. you tap one button. fair trade.
+            {duo} are running this one as fundraisers.
           </p>
           <p className="display mt-4 inline-block rounded-full bg-ink px-4 py-2 text-[15px] text-sun">donate →</p>
         </a>
@@ -203,8 +303,8 @@ export default function Home() {
           <Sparkle size={16} /> a note on accuracy
         </p>
         <p className="mt-2 text-[12px] leading-[1.65] lowercase">
-          the stars are educated guesses from projected splits ({sisters.map((x) => `${x.name} ${fmtPace(x.pace.goal)}, finishing about ${fmtClock(projectedFinish(toProfile(x)))}`).join("; ")}) plus your
-          sightings. official timing mats are at the start, every 5k, the half, mile 20 and the finish, in the nyrr app.
+          official times come from the nyrr timing mats (start, every mile and 5k, the half, the finish), checked every minute while this page is open. between mats, and whenever the feed is down, star positions are estimated from projected splits ({sisters.map((x) => `${x.name} ${fmtPace(x.pace.goal)}, finishing about ${fmtClock(projectedFinish(toProfile(x)))}`).join("; ")})
+          and sightings posted here.
         </p>
         <a href={site.trackingUrl} target="_blank" rel="noreferrer" className="press display mt-4 inline-block rounded-full border-2 border-ink bg-sun px-4 py-1.5 text-[14px] lowercase">
           official tracking →

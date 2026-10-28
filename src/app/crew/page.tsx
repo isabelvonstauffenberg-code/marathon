@@ -65,13 +65,14 @@ function CrewInner() {
   return (
     <main>
       <PageHeader
+        egg={{ src: "/pics/sunset-crew.jpg" }}
         eyebrow="cheer coverage"
         title={
           <>
             claim a <Hi tone="pink">mile</Hi>
           </>
         }
-        subtitle="spread out. a wall of friends at mile 8 and nobody at mile 20 is how marathons end in tears."
+        subtitle="spread out. the later miles need people more than the early ones."
       />
       <LocalModeNote />
 
@@ -91,7 +92,7 @@ function CrewInner() {
             <p className="display mt-2.5 inline-flex items-center gap-1 rounded-full bg-pink px-3 py-1 text-[13px] text-ink lowercase transition group-hover:translate-x-1">fix it →</p>
           </button>
         ) : (
-          <p className="display flex items-center px-5 py-4 text-[19px] leading-snug lowercase">every mile has a friend. legendary.</p>
+          <p className="display flex items-center px-5 py-4 text-[19px] leading-snug lowercase">every spot is covered.</p>
         )}
       </div>
 

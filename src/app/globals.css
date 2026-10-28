@@ -317,3 +317,6 @@ select {
   .no-print { display: none !important; }
   body { background: #fff; }
 }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

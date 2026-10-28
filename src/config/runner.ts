@@ -62,6 +62,8 @@ export const site = {
   donateUrl: "https://donations.nyrr.org/donations/new?fundraiser=30014e38e1c39b802b72",
   donateCause: "NYRR Team for Kids",
   trackingUrl: "https://liveresults.nyrr.org/e/NYRR-NY2026",
+  // RTRT.me event id behind trackingUrl; official mat splits feed the map. Empty string turns it off.
+  liveEvent: "NYRR-NY2026",
   photos: [] as { src: string; caption: string }[],
 };
 

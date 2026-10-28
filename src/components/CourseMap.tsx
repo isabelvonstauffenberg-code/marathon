@@ -14,6 +14,8 @@ export type MapRunner = {
   mile: number | null;
   lo?: number;
   hi?: number;
+  // Draw beneath other runners' stars.
+  under?: boolean;
 };
 
 type Props = {
@@ -202,7 +204,7 @@ export function CourseMap({ runners, spots = [], spotBadges = {}, onSpotClick, f
           const el = document.createElement("div");
           const color = safeColor(r.color);
           el.className = "map-runner";
-          el.style.zIndex = "2";
+          el.style.zIndex = r.under ? "1" : "2";
           el.style.setProperty("--c", color);
           const star = document.createElement("div");
           star.className = "star";

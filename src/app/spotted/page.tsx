@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { duo, sisters } from "@/config/runner";
 import { spotById } from "@/data/spots";
 import { isMain, sisterBySlug } from "@/lib/me";
@@ -13,10 +14,13 @@ export default function SpottedPage() {
   const now = useNow();
   const { rows: all, loading } = useCollection("sightings");
   const sightings = all.filter((s) => isMain(s.runner));
+  const [photoFirst, setPhotoFirst] = useState(false);
+  useEffect(() => setPhotoFirst(new URLSearchParams(window.location.search).get("photo") === "1"), []);
 
   return (
     <main>
       <PageHeader
+        egg={{ src: "/pics/tie-dye.jpg" }}
         eyebrow="sightings"
         title={
           <>
@@ -31,7 +35,7 @@ export default function SpottedPage() {
       />
       <LocalModeNote />
       <div className="px-5">
-        <SpotForm runners={sisters.map((s) => ({ slug: s.slug, name: s.name }))} />
+        <SpotForm runners={sisters.map((s) => ({ slug: s.slug, name: s.name }))} photoFirst={photoFirst} />
       </div>
 
       <section className="mt-12">
@@ -39,7 +43,7 @@ export default function SpottedPage() {
         {loading ? null : sightings.length === 0 ? (
           <div className="mx-5 flex items-center gap-4 rounded-[28px] border-[2.5px] border-dashed border-ink bg-sun-soft p-5">
             <Star size={54} fill="#ffffff" strokeWidth={7} className="float shrink-0" style={{ ["--r" as string]: "-10deg" }} />
-            <p className="display text-[20px] leading-[1.1] lowercase">no sightings yet. they&apos;re out there somewhere.</p>
+            <p className="display text-[20px] leading-[1.1] lowercase">no sightings yet.</p>
           </div>
         ) : (
           <ul className="rise mx-6 grid grid-cols-2 gap-x-5 gap-y-7">
@@ -69,7 +73,7 @@ export default function SpottedPage() {
             })}
           </ul>
         )}
-        <p className="mx-5 mt-8 text-center text-[11.5px] text-ink/70 lowercase">keep it about {duo}; strangers didn&apos;t sign up for this.</p>
+        <p className="mx-5 mt-8 text-center text-[11.5px] text-ink/70 lowercase">please keep photos to {duo}, not other runners.</p>
       </section>
     </main>
   );

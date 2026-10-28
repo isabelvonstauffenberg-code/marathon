@@ -27,7 +27,7 @@ export type TableName = keyof Tables;
 type NewRow<T extends TableName> = Omit<Tables[T], "id" | "created_at">;
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 let client: SupabaseClient | null = null;
 function supabase() {

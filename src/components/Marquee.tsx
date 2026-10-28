@@ -1,6 +1,6 @@
 import { race } from "@/config/runner";
 
-const bits = ["sun nov 1", "26.2 miles", "five boroughs", "two sisters", "two sisters, one finish line", "bring snacks", "go support!!", race.shortName.toLowerCase()];
+const bits = ["sun nov 1", "26.2 miles", "five boroughs", "two sisters", "staten island to central park", race.shortName.toLowerCase()];
 
 export function Marquee() {
   const row = bits.map((b) => (
