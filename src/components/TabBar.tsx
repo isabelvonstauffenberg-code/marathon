@@ -15,7 +15,7 @@ const tabs = [
 export function TabBar() {
   const path = usePathname();
   return (
-    <nav className="no-print fixed inset-x-0 bottom-0 z-40 px-3 pb-3 pb-safe">
+    <nav className="no-print sticky top-0 z-40 px-3 pt-2.5 pb-2">
       <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-full border-[2.5px] border-ink bg-ink p-1.5 shadow-[0_0_0_3px_var(--sun)]">
         {tabs.map(({ href, label }) => {
           const active = href === "/" ? path === "/" : path.startsWith(href);

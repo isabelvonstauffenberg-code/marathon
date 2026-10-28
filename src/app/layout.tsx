@@ -36,7 +36,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Star size={110} fill="#3ee04f" className="float absolute top-[72%] right-[calc(50%-460px)]" style={{ ["--r" as string]: "-8deg", animationDelay: "-0.6s" }} />
         </div>
         <Marquee />
-        <div className="relative mx-auto min-h-dvh max-w-xl pb-32">
+        <TabBar />
+        <div className="relative mx-auto min-h-dvh max-w-xl pb-12">
           {children}
           <p className="no-print mt-10 text-center">
             <Link href="/how" className="tag !text-[10.5px] text-ink/60 underline underline-offset-4 hover:text-ink">
@@ -44,7 +45,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </Link>
           </p>
         </div>
-        <TabBar />
       </body>
     </html>
   );
